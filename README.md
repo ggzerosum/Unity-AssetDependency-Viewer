@@ -8,7 +8,7 @@ Can be used for safe delete reousources.
 ## How to install
 1. open [your project folder root]/Packages/manifest.json with text editor
 
-2. add "com.provisgames.assetdependencyviewer" : "https://github.com/ggzerosum/Unity-AssetDependency-Viewer.git" in dependencies.
+2. add "com.provisgames.assetdependencyviewer" : "https://github.com/ggzerosum/Unity-AssetDependency-Viewer.git#Release" in dependencies.
 ![image](https://user-images.githubusercontent.com/14087406/71662359-85b71780-2d94-11ea-9838-3731d7a775cb.png)
 
 If you do properly, you can see Asset Dependency Viewer added in unity Package manager.
