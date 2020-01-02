@@ -1,0 +1,15 @@
+{
+  "name": "com.provisgames.assetdependencyviewer",
+  "version": "1.0.0-preview.1",
+  "displayName": "Asset Dependency Viewer",
+  "description": "This is Asset dependency viewer for handling resources.",
+  "unity": "2019.2",
+  "keywords": [
+    "dependency",
+    "asset"
+  ],
+  "author": {
+    "name": "ggzerosum(ProvisGames)",
+    "email": "ggzerosum@naver.com"
+  }
+}
