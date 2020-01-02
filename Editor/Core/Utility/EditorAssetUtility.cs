@@ -11,7 +11,7 @@ using Debug = UnityEngine.Debug;
 
 namespace ProvisGames.Core.Utility
 {
-    public static class Utility
+    public static class EditorAssetUtility
     {
         /// <summary>
         /// Get Asset's path in unity project (under asset folder)

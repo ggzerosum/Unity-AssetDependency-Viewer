@@ -30,7 +30,7 @@ namespace ProvisGames.Core.Utility
         /// <returns></returns>
         public bool HasAsset(UnityEngine.Object asset)
         {
-            if (!Utility.GetAssetPathSafely(asset, out string assetPath))
+            if (!EditorAssetUtility.GetAssetPathSafely(asset, out string assetPath))
             {
                 throw new ArgumentException("is Not Proper Asset");
             }
@@ -80,7 +80,7 @@ namespace ProvisGames.Core.Utility
                 if (!HasAsset(asset))
                     return false;
 
-                if (!Utility.GetAssetPathSafely(asset, out string assetPath))
+                if (!EditorAssetUtility.GetAssetPathSafely(asset, out string assetPath))
                 {
                     Debug.LogError("Is Not Proper Asset");
                     return false;
@@ -116,7 +116,7 @@ namespace ProvisGames.Core.Utility
 
             foreach (var asset in assets)
             {
-                if (Utility.GetAssetPathSafely(asset, out string path))
+                if (EditorAssetUtility.GetAssetPathSafely(asset, out string path))
                 {
                     string[] dependencies = AssetDatabase.GetDependencies(path, false);
 
@@ -239,7 +239,7 @@ namespace ProvisGames.Core.Utility
         }
         private void AddChildrenRecursive(UnityEngine.Object asset, TreeViewItem parentItem, IList<TreeViewItem> rows)
         {
-            if (!Utility.GetAssetPathSafely(asset, out string assetPath))
+            if (!EditorAssetUtility.GetAssetPathSafely(asset, out string assetPath))
             {
                 return;
             }
