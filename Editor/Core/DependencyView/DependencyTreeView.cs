@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using ProvisGames.Core.AssetDependency.Utility;
+using ProvisGames.Core.Utility;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace ProvisGames.Core.Utility
+namespace ProvisGames.Core.AssetDependency.View
 {
     class DependencyTreeView : TreeView
     {
-        public static GUIStyle lineStyle = (GUIStyle)"TV Line";
+        public string lineStyle = "TV Line";
         private List<UnityEngine.Object> assets = new List<Object>();
 
         public DependencyTreeView(TreeViewState state):
@@ -54,7 +56,7 @@ namespace ProvisGames.Core.Utility
             {
                 if (HasAsset(asset))
                 {
-                    Debug.Log("Already Registered Asset");
+                    Debugger.Log("Already Registered Asset");
                     return false;
                 }
 
@@ -62,7 +64,7 @@ namespace ProvisGames.Core.Utility
             }
             catch (Exception e)
             {
-                Debug.LogWarning(e);
+                Debugger.LogWarning(e);
                 return false;
             }
 
@@ -82,17 +84,17 @@ namespace ProvisGames.Core.Utility
 
                 if (!EditorAssetUtility.GetAssetPathSafely(asset, out string assetPath))
                 {
-                    Debug.LogError("Is Not Proper Asset");
+                    Debugger.LogError("Is Not Proper Asset");
                     return false;
                 }
 
                 string assetGuid = AssetDatabase.AssetPathToGUID(assetPath);
                 int removedCount = this.assets.RemoveAll(element => assetGuid == AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(element)));
-                Debug.Log($"Removed Count : {removedCount}");
+                Debugger.Log($"Removed Count : {removedCount}");
             }
             catch (Exception e)
             {
-                Debug.LogError(e);
+                Debugger.LogError(e);
                 return false;
             }
 
@@ -114,24 +116,18 @@ namespace ProvisGames.Core.Utility
             var rows = GetRows() ?? new List<TreeViewItem>(50);
             rows.Clear();
 
-            foreach (var asset in assets)
+            if (hasSearch)
             {
-                if (EditorAssetUtility.GetAssetPathSafely(asset, out string path))
+                foreach (var asset in assets)
                 {
-                    string[] dependencies = AssetDatabase.GetDependencies(path, false);
-
-                    var item = CreateTreeViewAssetItem(asset, asset.GetInstanceID(), AssetDatabase.AssetPathToGUID(path), dependencies.Length);
-                    root.AddChild(item);
-                    rows.Add(item);
-
-                    if (dependencies.Length > 0 && IsExpanded(item.id))
-                    {
-                        AddChildrenRecursive(asset, item, rows);
-                    }
-                    else
-                    {
-                        item.children = CreateChildListForCollapsedParent();
-                    }
+                    SearchRows(asset, in root, in rows);
+                }
+            }
+            else
+            {
+                foreach (var asset in assets)
+                {
+                    BuildCustomRow(asset, in root, in rows);
                 }
             }
 
@@ -159,7 +155,7 @@ namespace ProvisGames.Core.Utility
                 currentRect.x += extraSpaceBeforeIconAndLabel;
             }
 
-            GUIStyle style = lineStyle;
+            GUIStyle style = (GUIStyle)lineStyle;
             string labelText = $"{args.label}{(string.IsNullOrEmpty(postFix) ? postFix : $" [D:{postFix}]")}";
             Vector2 labelRect = style.CalcSize(new GUIContent(labelText));
             currentRect = new Rect(currentRect.x + currentRect.width, currentRect.y, labelRect.x, labelRect.y);
@@ -237,7 +233,51 @@ namespace ProvisGames.Core.Utility
         {
             return new TreeViewAssetItem(id, - 1, asset.name, guid, asset.GetType(), dependencyCount);
         }
-        private void AddChildrenRecursive(UnityEngine.Object asset, TreeViewItem parentItem, IList<TreeViewItem> rows)
+
+        private void SearchRows(UnityEngine.Object asset, in TreeViewItem root, in IList<TreeViewItem> rows)
+        {
+            if (EditorAssetUtility.GetAssetPathSafely(asset, out string path))
+            {
+                string[] allDependencies = AssetDatabase.GetDependencies(path, true);
+                foreach (string dependency in allDependencies)
+                {
+                    string assetName = System.IO.Path.GetFileNameWithoutExtension(dependency);
+                    if (assetName.ToLower().Contains(searchString.ToLower()))
+                    {
+                        UnityEngine.Object filteredAsset = AssetDatabase.LoadMainAssetAtPath(dependency);
+                        var item = CreateTreeViewAssetItem(
+                            filteredAsset, 
+                            filteredAsset.GetInstanceID(), 
+                            AssetDatabase.AssetPathToGUID(dependency), 
+                            0);
+
+                        root.AddChild(item);
+                        rows.Add(item);
+                    }
+                }
+            }
+        }
+        private void BuildCustomRow(UnityEngine.Object asset, in TreeViewItem root, in IList<TreeViewItem> rows)
+        {
+            if (EditorAssetUtility.GetAssetPathSafely(asset, out string path))
+            {
+                string[] dependencies = AssetDatabase.GetDependencies(path, false);
+
+                var item = CreateTreeViewAssetItem(asset, asset.GetInstanceID(), AssetDatabase.AssetPathToGUID(path), dependencies.Length);
+                root.AddChild(item);
+                rows.Add(item);
+
+                if (dependencies.Length > 0 && IsExpanded(item.id))
+                {
+                    AddChildrenRecursive(asset, item, rows);
+                }
+                else
+                {
+                    item.children = CreateChildListForCollapsedParent();
+                }
+            }
+        }
+        private void AddChildrenRecursive(UnityEngine.Object asset, in TreeViewItem parentItem, in IList<TreeViewItem> rows)
         {
             if (!EditorAssetUtility.GetAssetPathSafely(asset, out string assetPath))
             {
@@ -245,7 +285,6 @@ namespace ProvisGames.Core.Utility
             }
 
             string[] dependencies = AssetDatabase.GetDependencies(assetPath, false);
-            parentItem.children = new List<TreeViewItem>(dependencies.Length);
 
             foreach (string dependency in dependencies)
             {
@@ -273,7 +312,10 @@ namespace ProvisGames.Core.Utility
             }
         }
     }
+}
 
+namespace ProvisGames.Core.AssetDependency.View
+{
     class TreeViewAssetItem : TreeViewItem
     {
         public AssetInfo assetInfo { get; }

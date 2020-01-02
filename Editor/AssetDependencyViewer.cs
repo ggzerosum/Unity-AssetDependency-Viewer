@@ -1,4 +1,6 @@
 ﻿using System;
+using ProvisGames.Core.AssetDependency.Utility;
+using ProvisGames.Core.AssetDependency.View;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
@@ -19,8 +21,8 @@ namespace ProvisGames.Core.Utility
             viewPort.Show();
         }
 
-        [MenuItem("Assets/Show Dependency of Asset", false, 50)]
-        public static void Select()
+        [MenuItem("Assets/Show Dependency of selected Asset", false, 50)]
+        public static void ShowDependencyOfAssetRefer()
         {
             if (Selection.transforms.Length > 0)
             {
@@ -49,8 +51,8 @@ namespace ProvisGames.Core.Utility
             }
         }
 
-        [MenuItem("Assets/Show Dependency of Asset", true, 50)]
-        public static bool ValidateSelect()
+        [MenuItem("Assets/Show Dependency of selected Asset", true, 50)]
+        public static bool ValidateShowDependencyOfAssetRefer()
         {
             return Selection.transforms.Length == 0; // scene object is not allowed
         }
@@ -59,31 +61,27 @@ namespace ProvisGames.Core.Utility
         {
             DrawMenu();
             DrawTree();
-            Debug.Log("Draw GUI");
+            Debugger.Log("Draw GUI");
         }
-
         private void OnEnable()
         {
             m_Instance = this; // internal usage singleton
-            Debug.Log("Enabled");
+            Debugger.Log("Enabled");
         }
-
         private void OnDisable()
         {
             if (m_Instance == this) // internal usage singleton
                 m_Instance = null;
 
-            Debug.Log("Disabled");
+            Debugger.Log("Disabled");
         }
-
         private void OnFocus()
         {
-            Debug.Log("Focused");
+            Debugger.Log("Focused");
         }
-
         private void OnLostFocus()
         {
-            Debug.Log("Lost Focus");
+            Debugger.Log("Lost Focus");
         }
     }
 
@@ -91,10 +89,11 @@ namespace ProvisGames.Core.Utility
     {
         private static AssetDependencyViewer m_Instance { get; set; } = null;
         private bool m_isInitialized = false;
+        private SearchField m_SearchField;
         private string m_searchText = string.Empty;
 
-        private TreeViewState treeViewState;
-        private DependencyTreeView treeView;
+        private TreeViewState m_TreeViewState;
+        private DependencyTreeView m_TreeView;
 
         #region Initialization
         private void Initialize(bool overwrite)
@@ -103,22 +102,24 @@ namespace ProvisGames.Core.Utility
             if (m_isInitialized && !overwrite)
                 return;
 
-            if (treeViewState == null)
-                treeViewState = new TreeViewState();
+            if (m_TreeViewState == null) // m_TreeView State
+                m_TreeViewState = new TreeViewState();
 
-            treeView = new DependencyTreeView(treeViewState);
+            m_TreeView = new DependencyTreeView(m_TreeViewState); // m_TreeView
 
+            m_SearchField = new SearchField(); // Searching tool bar
+            m_SearchField.downOrUpArrowKeyPressed += m_TreeView.SetFocusAndEnsureSelectedItem;
             m_isInitialized = true;
-            Debug.Log("Initialized");
+            Debugger.Log("Initialized");
         }
         private void ShowDependency(UnityEngine.Object asset)
         {
             if (asset == null)
                 throw new ArgumentException("Asset does not be provided");
 
-            if (treeView?.AddAsset(asset) ?? false)
+            if (m_TreeView?.AddAsset(asset) ?? false)
             {
-                treeView?.Reload();
+                m_TreeView?.Reload();
             }
         }
 
@@ -135,28 +136,20 @@ namespace ProvisGames.Core.Utility
                 if (GUILayout.Button(reloadLabel, EditorStyles.toolbarButton, GUILayout.MinWidth(labelSize.x), GUILayout.MaxWidth(labelSize.x)))
                 {
 
-                    treeView.Reload();
+                    m_TreeView.Reload();
                 }
 
-                using (var changeFlag = new EditorGUI.ChangeCheckScope())
-                {
-                    m_searchText = EditorGUILayout.DelayedTextField(m_searchText, EditorStyles.toolbarSearchField, GUILayout.ExpandWidth(true));
-
-                    if (changeFlag.changed)
-                    {
-                        Debug.Log("Search Filter Changed");
-                    }
-                }
+                m_TreeView.searchString = m_SearchField.OnToolbarGUI(m_TreeView.searchString);
             }
         }
 
         private void DrawTree()
         {
-            if (treeView == null)
+            if (m_TreeView == null)
                 return;
 
             Rect lastRect = GUILayoutUtility.GetLastRect();
-            treeView.OnGUI(new Rect(
+            m_TreeView.OnGUI(new Rect(
                 new Vector2(lastRect.x, lastRect.y + lastRect.height),
                 new Vector2(position.width, position.height - lastRect.y))
             );
