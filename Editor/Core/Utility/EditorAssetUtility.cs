@@ -9,7 +9,7 @@ using UnityEngine;
 using UnityEditor;
 using Debug = UnityEngine.Debug;
 
-namespace ProvisGames.Core.Utility
+namespace ProvisGames.Core.AssetDependency.Utility
 {
     public static class EditorAssetUtility
     {
@@ -35,7 +35,7 @@ namespace ProvisGames.Core.Utility
             }
             catch (Exception e)
             {
-                Debug.Log(e);
+                Debugger.Log(e);
             }
 
             path = string.Empty;
