@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Linq;
 using ProvisGames.Core.AssetDependency.Utility;
 using ProvisGames.Core.AssetDependency.View;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace ProvisGames.Core.Utility
 {
@@ -59,8 +61,10 @@ namespace ProvisGames.Core.Utility
 
         private void OnGUI()
         {
-            DrawMenu();
+            DrawUpperMenu();
             DrawTree();
+            DrawBottomMenu();
+
             Debugger.Log("Draw GUI");
         }
         private void OnEnable()
@@ -126,7 +130,7 @@ namespace ProvisGames.Core.Utility
         #endregion
 
         #region Draw GUI
-        private void DrawMenu()
+        private void DrawUpperMenu()
         {
             // Draw Search tool bar
             using (var horizontalScope = new EditorGUILayout.HorizontalScope(EditorStyles.toolbar, GUILayout.ExpandWidth(true)))
@@ -148,11 +152,26 @@ namespace ProvisGames.Core.Utility
             if (m_TreeView == null)
                 return;
 
-            Rect lastRect = GUILayoutUtility.GetLastRect();
-            m_TreeView.OnGUI(new Rect(
-                new Vector2(lastRect.x, lastRect.y + lastRect.height),
-                new Vector2(position.width, position.height - lastRect.y))
-            );
+            Rect treeDrawableArea = GUILayoutUtility.GetRect(0, position.width, 0, position.height - 30f);
+            m_TreeView.OnGUI(treeDrawableArea);
+        }
+
+        private Vector2 scrollPos = Vector2.zero;
+        private void DrawBottomMenu()
+        {
+            // Draw Path Label
+            using (var horizontalScrollView = new EditorGUILayout.ScrollViewScope(scrollPos, EditorStyles.toolbar, GUILayout.ExpandWidth(true)))
+            {
+                string label = "";
+                var selections = m_TreeView.GetSelection();
+                if (selections.Count != 0)
+                {
+                    label = AssetDatabase.GUIDToAssetPath(m_TreeView.FindAssetGuid(selections.First()));
+                }
+
+                GUILayout.Label(label);
+                scrollPos = horizontalScrollView.scrollPosition;
+            }
         }
         #endregion
     }

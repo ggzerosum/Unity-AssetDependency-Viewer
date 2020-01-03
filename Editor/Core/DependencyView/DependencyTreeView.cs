@@ -100,6 +100,24 @@ namespace ProvisGames.Core.AssetDependency.View
 
             return true;
         }
+        /// <summary>
+        /// Find Asset guid from tree elements
+        /// </summary>
+        /// <param name="id">tree element's id</param>
+        /// <returns>not found : string.Empty</returns>
+        public string FindAssetGuid(int id)
+        {
+            IList<TreeViewItem> rows = GetRows();
+            foreach (TreeViewItem item in rows)
+            {
+                if (item.id == id && item is TreeViewAssetItem assetItem)
+                {
+                    return assetItem.assetInfo.assetReferenceGuid;
+                }
+            }
+
+            return string.Empty;
+        }
         public void OnDestroy()
         {
             assets.Clear();
@@ -327,7 +345,7 @@ namespace ProvisGames.Core.AssetDependency.View
             string assetGuid,
             Type assetType,
             int dependencyCount
-            ) : base(id, depth, displayName)
+        ) : base(id, depth, displayName)
         {
             assetInfo = new AssetInfo()
             {
